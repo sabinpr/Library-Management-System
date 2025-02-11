@@ -1,0 +1,30 @@
+#DB Design
+    #Book
+        -title = CharField
+        -author = CharField
+        -genres = (Genre , ManyToMany)
+        -isbn = CharField(unique)
+        -description = TextField
+        -publisher = CharField
+        -publisheed_date = DateField
+        -total_copies = PositiveIntegerField(default= 1)
+        -borrowed_copies = PositiveIntegerField(default= 0)
+
+    
+    #Genre
+        -name = CharField
+        -description = TextField
+    
+    #Borrowing
+        -member = (User,ForeignKey)
+        -book = (Book,ForeignKey)
+        -borrowed_at = DateTimeField
+        -returned_at = DateTimeField
+        -due_date = DateField
+        -returned = BooleanField
+
+    #Fine
+        -borrowing = (Borrowing,OneToOne)
+        -fine_amount = DecimalField
+        -paid = BooleanField
+        -created_at = DateTimeField
