@@ -2,6 +2,8 @@ from rest_framework.serializers import ModelSerializer
 from .models import User, Fine, Borrowing, Book, Genre
 from django.contrib.auth.models import Group
 
+# Serializers for all the models
+
 
 class GroupSerializer(ModelSerializer):
     class Meta:

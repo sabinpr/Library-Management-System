@@ -6,9 +6,8 @@ from django.utils.timezone import now
 
 # Create your models here.
 
+
 # Custom Manager for Borrowing Model
-
-
 class BorrowingManager(models.Manager):
 
     # Return borrowings that are still active(not returned)
@@ -19,7 +18,7 @@ class BorrowingManager(models.Manager):
     def overdue_borrowings(self):
         return self.filter(due_date__lt=date.today(), returned=False)
 
-
+# Custom User Model
 class User(AbstractUser):
     username = models.CharField(max_length=200, null=True)
     password = models.CharField(max_length=200)
