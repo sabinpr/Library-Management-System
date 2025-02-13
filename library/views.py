@@ -22,15 +22,15 @@ class BookViewSet(ModelViewSet):
     serializer_class = BookSerializer
 
     # Filtering and searching using title, author and genre
-    filterest_fields = ['title', 'author', 'genre__name']
-    search_fields = ['title', 'author', 'genre__name']
+    filterset_fields = ['title', 'author', 'genre__name']
+    search_fields = ['title', 'author', 'genre__name', 'isbn']
 
 
 class BorrowingViewSet(ModelViewSet):
     queryset = Borrowing.objects.all()
     serializer_class = BorrowingSerializer
     # Filtering By username and due date
-    filterset_fields = ['member__username', 'due_date']
+    filterset_fields = ['member__username', 'due_date', 'returned']
     # Searching for members by username
     search_fields = ['member__username']
 

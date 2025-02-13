@@ -31,4 +31,4 @@ urlpatterns = [
     path('docs/', schema_view.as_view(), name='api-docs'),
 ]
 
-urlpatterns = format_suffix_patterns(urlpatterns)
+# urlpatterns = format_suffix_patterns(urlpatterns)

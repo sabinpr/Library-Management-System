@@ -19,8 +19,10 @@ class BorrowingManager(models.Manager):
         return self.filter(due_date__lt=date.today(), returned=False)
 
 # Custom User Model
+
+
 class User(AbstractUser):
-    username = models.CharField(max_length=200, null=True)
+    username = models.CharField(max_length=200, blank=True, default="")
     password = models.CharField(max_length=200)
     email = models.EmailField(unique=True)
     groups = models.ForeignKey(
@@ -77,9 +79,11 @@ class Book(models.Model):
 # Borrowing Model to track book borrowing information
 class Borrowing(models.Model):
     # the member who borroowed the book
-    member = models.ForeignKey(User, on_delete=models.CASCADE)
+    member = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True)
     # the book that was borrowed
-    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    book = models.ForeignKey(
+        Book, on_delete=models.SET_NULL, null=True, blank=True)
     # when the book was borrowed
     borrowed_at = models.DateTimeField(auto_now_add=True)
     # when the book was returned
@@ -94,22 +98,26 @@ class Borrowing(models.Model):
     def save(self, *args, **kwargs):
         # Update borrowed_copies when a book is borrowed or returned
         if not self.pk:  # New borrow instance
-            if self.book.available_copies > 0:
+            if self.book and self.book.available_copies > 0:
                 self.book.borrowed_copies += 1
             else:
-                raise ValueError("No copies available to borrow!")
+                raise ValidationError("No copies available to borrow!")
         # Set returned_at automatically when returned is marked True
-        elif self.returned and not self.returned_at:
+        elif self.returned and not self.returned_at:  # Mark as returned
             self.returned_at = now()  # Set returned_at to current time
-            self.book.borrowed_copies -= 1
+            if self.book:
+                self.book.borrowed_copies = max(
+                    0, self.book.borrowed_copies - 1)  # Prevent negative values
 
-        self.book.save()  # Save book changes
+        if self.book:
+            self.book.save()  # Save book changes
         super().save(*args, **kwargs)
 
     # Ensure due date is not before borrow date
     def clean(self):
-        if self.due_date < self.borrowed_at.date():
-            raise ValidationError('Due date cannot be before Borrowed date')
+        if self.borrowed_at and self.due_date < self.borrowed_at.date():
+            raise ValidationError(
+                'Due date cannot be before the borrowed date')
 
     def __str__(self):
         return f"{self.member.username} - {self.book.title}"
@@ -132,10 +140,8 @@ class Fine(models.Model):
 
     # Methood to calculate fine based on overdue days
     def calculate_fine(self):
-        overdue_days = (date.today()-self.borrowing.due_date).days
-        if overdue_days > 0:
-            # Charge Rs.10 per overdue days
-            self.fine_amount = overdue_days * 10
-        else:
-            self.fine_amount = 0
-        self.save()
+        if not self.borrowing.returned:  # Only apply fine if book is still borrowed
+            overdue_days = (date.today() - self.borrowing.due_date).days
+            # Rs.10 per overdue day
+            self.fine_amount = max(0, overdue_days * 10)
+            self.save()
